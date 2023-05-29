@@ -56,7 +56,7 @@ logs: docker-compose.yml ##Logs from docker
 Project:
 
 ## Up the project and load database
-install: build up vendor node-modules assets-build db-load-fixtures
+install: build up vendor db-create db-migrate
 
 ## Reset the project
 reset: down install
@@ -71,34 +71,15 @@ stop: docker-compose.yml
 	@$(DOCKER_COMPOSE) pause || true
 
 ##Install composer
-vendor: ActionValidationSystem/composer.lock
+vendor: #mytheresa/composer.lock
 	@echo "\nInstalling composer packages...\e[0m"
 	@$(COMPOSER) install
 
-##Install node modules with npm
-node-modules: ActionValidationSystem/package.json
-	@echo "\nInstalling npm packages...\e[0m"
-	@$(EXEC_NPM) install
-
-##Update node modules with npm
-node-modules-update: ActionValidationSystem/package.json
-	@echo "\nInstalling npm packages...\e[0m"
-	@$(EXEC_NPM) update
-
 ## Update composer
-composer-update: ActionValidationSystem/composer.json
+composer-update: #mytheresa/composer.json
 	@echo "\nUpdating composer packages...\e[0m"
 	@$(COMPOSER) update
 
-## Install package with composer
-composer-require: ActionValidationSystem/composer.json
-	@echo "\nUpdating composer packages...\e[0m"
-	@$(COMPOSER) require $(P)
-
-## Install package with composer for dev
-composer-require-dev: ActionValidationSystem/composer.json
-	@echo "\nUpdating composer packages...\e[0m"
-	@$(COMPOSER) require --dev $(P)
 
 ## Clear symfony cache
 cc:
@@ -110,38 +91,13 @@ wait-db:
 	@echo "\nWaiting for DB...\e[0m"
 	@$(EXEC_PHP) php -r "set_time_limit(60);for(;;){if(@fsockopen('database',3306))die;echo \"\";sleep(1);}"
 
-##Update node modules with npm
-assets-build: ActionValidationSystem/package.json
-	@echo "\nBuilding assets...\e[0m"
-	@$(EXEC_GULP)
-
-## Watch assets and do live reload
-watch: ActionValidationSystem/package.json
-	@echo "\nWatching assets changes...\e[0m"
-	@$(EXEC_GULP) watch
-
-.PHONY: install reset start stop vendor composer-update node-modules wait-db cc
-
 #################################
 Database:
-
-## Recreate database structure
-db-reload-schema: wait-db db-drop db-create db-update
 
 ## Create database
 db-create: wait-db
 	@echo "\nCreating database...\e[0m"
 	@$(EXEC_SYMFONY) doctrine:database:create --if-not-exists
-
-## Create database
-db-update:
-	@echo "\nUpdate database...\e[0m"
-	@$(EXEC_SYMFONY) doctrine:schema:update --force
-
-## Drop database
-db-drop: wait-db
-	@echo "\nDropping database...\e[0m"
-	@$(EXEC_SYMFONY) doctrine:database:drop --force --if-exists
 
 ## Generate migration by diff
 db-diff: wait-db
@@ -152,12 +108,19 @@ db-migrate: wait-db
 	@echo "\nRunning migrations...\e[0m"
 	@$(EXEC_SYMFONY) doctrine:migration:migrate --no-interaction --all-or-nothing
 
-## Load database from dump
-db-load-data: wait-db
-	@echo "\nLoading fixtures from dump...\e[0m"
-	@$(EXEC_DB) "mysql --user=root --password=root < /home/app/dump/skeleton.sql"
 
-## Reload fixtures
-db-load-fixtures: wait-db db-reload-schema
-	@echo "\nLoading fixtures from fixtures files...\e[0m"
-	@$(EXEC_SYMFONY) doctrine:fixtures:load --no-interaction
+#################################
+Test:
+run-tests: wait-db db-tests-create db-tests-migrate
+	@echo "\nRunning Test...\e[0m"
+	@$(EXEC_PHP) bin/phpunit 
+
+## Create database
+db-tests-create: wait-db
+	@echo "\nCreating database...\e[0m"
+	@$(EXEC_SYMFONY) --env=test doctrine:database:create --if-not-exists
+
+## Load migration
+db-tests-migrate: wait-db
+	@echo "\nRunning migrations...\e[0m"
+	@$(EXEC_SYMFONY) --env=test doctrine:migration:migrate --no-interaction --no-debug
