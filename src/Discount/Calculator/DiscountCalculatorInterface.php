@@ -19,4 +19,6 @@ interface DiscountCalculatorInterface
      * @return int|null
      */
     public function calculateDiscount(Product $product): ?int;
+
+    public function getDiscountPercentage(): int;
 }

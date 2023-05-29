@@ -37,15 +37,11 @@ class CategoryDiscountCalculator implements DiscountCalculatorInterface
 
     public function calculateDiscount(Product $product): ?int
     {
-        // $discount = $this->discountRepo->findOneBy([
-        //     'discountType' => DiscountTypeConfiguration::CATEGORY_DISCOUNT_TYPE,
-        //     'productCategory' => $product->getProductCategory(),
-        // ]);
+        return -1 * $product->getPrice() * $this->discount->getDiscountPercent() / 100;
+    }
 
-        // if (empty($discount)) {
-        //     return null;
-        // }
-
-        return -1 * $product->getPrice() * $this->discount->getDiscountPercent();
+    public function getDiscountPercentage(): int
+    {
+        return $this->discount->getDiscountPercent();
     }
 }

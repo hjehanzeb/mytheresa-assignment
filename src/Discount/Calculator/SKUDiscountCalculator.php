@@ -37,16 +37,11 @@ class SKUDiscountCalculator implements DiscountCalculatorInterface
 
     public function calculateDiscount(Product $product): ?int
     {
-        // $discount = $this->discountRepo->findOneBy([
-        //     'discountType' => DiscountTypeConfiguration::SKU_DISCOUNT_TYPE,
-        //     'productSKU' => $product->getSKU(),
-        // ]);
-
-        // if (empty($discount)) {
-        //     return null;
-        // }
-
-        return -1 * $product->getPrice() * $this->discount->getDiscountPercent();
+        return -1 * $product->getPrice() * $this->discount->getDiscountPercent() / 100;
     }
 
+    public function getDiscountPercentage(): int
+    {
+        return $this->discount->getDiscountPercent();
+    }
 }

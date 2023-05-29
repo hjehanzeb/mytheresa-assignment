@@ -40,7 +40,18 @@ services:
     image: redis:alpine
     networks:
       - mytheresa
+  
 
+  phpmyadmin:
+    image: phpmyadmin
+    restart: always
+    ports:
+      - 8880:80
+    environment:
+      - PMA_ARBITRARY=1
+      - PMA_HOST=mytheresa_database_1
+    networks:
+      - mytheresa
 
 
 networks:

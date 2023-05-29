@@ -48,7 +48,7 @@ class ProductRepository extends ServiceEntityRepository
         $qb = $this->createQueryBuilder('p');
 
         if (!empty($price)) {
-            $qb ->andWhere('p.price < :price')
+            $qb ->andWhere('p.price <= :price')
                 ->setParameter('price', $price);
         }
 

@@ -16,13 +16,19 @@ class DiscountCalculatorCollector
 
     public function findOne(Product $product): ?DiscountCalculatorInterface
     {
+        $maxDiscountCalculator = null;
+        $maxDiscount = 0;
+
         /** @var DiscountCalculatorInterface $calculator */
         foreach ($this->discountCalculators as $calculator) {
             if ($calculator->supportsDiscountType($product)) {
-                return $calculator;
+                if (intval($calculator->getDiscountPercentage()) > $maxDiscount) {
+                    $maxDiscount = intval($calculator->getDiscountPercentage());
+                    $maxDiscountCalculator = $calculator;
+                }
             }
         }
 
-        return null;
+        return $maxDiscountCalculator;
     }
 }

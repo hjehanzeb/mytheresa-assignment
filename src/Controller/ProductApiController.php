@@ -14,6 +14,7 @@ class ProductApiController extends AbstractController
 {
     protected ProductCategoryRepository $productCategoryRepo;
     protected DiscountCalculatorCollector $calculatorCollector;
+    public const CURRENCY = 'EUR';
 
     public function __construct(
         ProductCategoryRepository $productCategoryRepository,
@@ -32,18 +33,35 @@ class ProductApiController extends AbstractController
         $response = [];
 
         if (!empty($categoryName)) {
-            $category = $this->productCategoryRepo->findByName($categoryName);
+            $category = $this->productCategoryRepo->findOneByName($categoryName);
         }
 
         $products = $productRepository->findByPriceLessThanCategory($priceLessThan, $category);
 
         foreach ($products as $product) {
-            $calculator = $this->calculatorCollector->findOne();
+            $calculator = $this->calculatorCollector->findOne($product);
+            $finalPrice = $product->getPrice();
+            $discountPercentage = null;
+
+            if (!empty($calculator)) {
+                $discountApplied = $calculator->calculateDiscount($product);
+                $finalPrice = $product->getPrice() + $discountApplied;
+                $discountPercentage = $calculator->getDiscountPercentage() . '%';
+            }
+
+            array_push($response, [
+                'sku' => $product->getSKU(),
+                'name' => $product->getName(),
+                'category' => $product->getProductCategory()->getName(),
+                'price' => [
+                    'original' => $product->getPrice(),
+                    'final' => $finalPrice,
+                    'discount_percentage' => $discountPercentage,
+                    'currency' => self::CURRENCY,
+                ]
+            ]);
         }
 
-        return $this->json([
-            'message' => 'Welcome to your new controller!',
-            'path' => 'src/Controller/ProductApiController.php',
-        ]);
+        return $this->json($response);
     }
 }
